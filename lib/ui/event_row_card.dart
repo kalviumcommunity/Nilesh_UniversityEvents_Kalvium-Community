@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_colors.dart';
-import '../data/app_models.dart';
+import '../data/mock_data.dart';
 import 'image_placeholder.dart';
 
 /// Thumbnail + title + muted detail lines (+ optional action on the right
@@ -16,7 +16,7 @@ class EventRowCard extends StatelessWidget {
     this.dark = false,
   });
 
-  final CampusEvent event;
+  final MockEvent event;
   final List<String> lines;
   final VoidCallback onTap;
   final Widget? action;

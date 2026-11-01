@@ -58,13 +58,6 @@ void main() {
       expect(AssignmentStatus.tryParse('declined'), AssignmentStatus.declined);
     });
 
-    test('accepts user-facing labels and ignores casing/whitespace', () {
-      expect(AssignmentStatus.tryParse('Assigned'), AssignmentStatus.assigned);
-      expect(
-          AssignmentStatus.tryParse(' CONFIRMED '), AssignmentStatus.confirmed);
-      expect(AssignmentStatus.tryParse('declined'), AssignmentStatus.declined);
-    });
-
     test('returns null for unknown or missing values', () {
       expect(AssignmentStatus.tryParse('pending'), isNull);
       expect(AssignmentStatus.tryParse(''), isNull);

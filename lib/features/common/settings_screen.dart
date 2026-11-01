@@ -1,30 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/app_colors.dart';
 import '../../app/routes.dart';
-import '../../backend/syncsphere_backend.dart';
 import '../../ui/app_button.dart';
 import '../../ui/screen_header.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
-
-  Future<void> _signOut(BuildContext context) async {
-    try {
-      await SyncSphereBackend.instance.signOut();
-      if (!context.mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        Routes.signIn,
-        (_) => false,
-      );
-    } on FirebaseAuthException catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message ?? 'Could not sign out.')),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +45,10 @@ class SettingsScreen extends StatelessWidget {
                 label: 'Log Out',
                 style: AppButtonStyle.dangerSoft,
                 icon: Icons.logout,
-                onPressed: () => _signOut(context),
+                onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  Routes.signIn,
+                  (_) => false,
+                ),
               ),
             ),
           ],

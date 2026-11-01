@@ -2,28 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../app/app_colors.dart';
 import '../../app/routes.dart';
-import '../../backend/syncsphere_backend.dart';
+import '../../data/mock_data.dart';
 import '../../ui/avatar_circle.dart';
 import '../../ui/stat_tile.dart';
 
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key, this.onOpenEvents});
 
   /// Switches the admin shell to its Events tab.
   final VoidCallback? onOpenEvents;
-
-  @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends State<DashboardScreen> {
-  late Future<EventReport> _report;
-
-  @override
-  void initState() {
-    super.initState();
-    _report = SyncSphereBackend.instance.getEventReport();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,15 +21,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'Create Event',
         () => nav.pushNamed(Routes.createEvent)
       ),
-      (
-        Icons.event_note_outlined,
-        'Manage Events',
-        () => widget.onOpenEvents?.call()
-      ),
+      (Icons.event_note_outlined, 'Manage Events', () => onOpenEvents?.call()),
       (
         Icons.hub_outlined,
         'Assign Volunteers',
-        () => widget.onOpenEvents?.call()
+        () => nav.pushNamed(Routes.assignVolunteers, arguments: webDev)
       ),
       (
         Icons.insert_chart_outlined,
@@ -67,9 +50,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               'Welcome Back,',
               style: TextStyle(color: Colors.white70, fontSize: 26),
             ),
-            Text(
-              SyncSphereBackend.instance.currentUserName,
-              style: const TextStyle(
+            const Text(
+              'Nilesh',
+              style: TextStyle(
                 color: Colors.white,
                 fontSize: 34,
                 fontWeight: FontWeight.w800,
@@ -77,50 +60,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 10),
             const Text(
-              'Event Coordinator',
+              'Coordinator  •  Tech Club',
               style: TextStyle(color: Colors.white60, fontSize: 18),
             ),
             const SizedBox(height: 26),
-            FutureBuilder<EventReport>(
-              future: _report,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Text(
-                    'Could not load dashboard statistics.',
-                    style: TextStyle(color: Colors.white70),
-                  );
-                }
-                if (!snapshot.hasData) {
-                  return const LinearProgressIndicator();
-                }
-                return Row(
-                  children: [
-                    Expanded(
-                      child: StatTile(
-                        value: '${snapshot.data!.events}',
-                        label: 'Events',
-                        dark: true,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: StatTile(
-                        value: '${snapshot.data!.registrations}',
-                        label: 'Participants',
-                        dark: true,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: StatTile(
-                        value: '${snapshot.data!.volunteers}',
-                        label: 'Assignments',
-                        dark: true,
-                      ),
-                    ),
-                  ],
-                );
-              },
+            const Row(
+              children: [
+                Expanded(
+                    child: StatTile(value: '12', label: 'Events', dark: true)),
+                SizedBox(width: 12),
+                Expanded(
+                  child:
+                      StatTile(value: '248', label: 'Participants', dark: true),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: StatTile(value: '13', label: 'Volunteers', dark: true),
+                ),
+              ],
             ),
             const SizedBox(height: 30),
             const Text(

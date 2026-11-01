@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/app_colors.dart';
 import '../../app/routes.dart';
-import '../../backend/firebase_volunteer_backend.dart';
-import '../../backend/syncsphere_backend.dart';
-import '../../data/app_models.dart';
-import '../../features/volunteer/volunteer.dart';
+import '../../dev/demo_volunteer_backend.dart';
 import '../../ui/avatar_circle.dart';
 import '../../ui/stat_tile.dart';
 
@@ -23,10 +20,11 @@ class ProfileScreen extends StatelessWidget {
         'My Registrations',
         () => nav.pushNamed(Routes.myEvents)
       ),
+      (Icons.workspace_premium_outlined, 'My Certificates', () {}),
       (
         Icons.volunteer_activism_outlined,
         'Volunteer Hours',
-        () => openVolunteerDashboard(context)
+        () => openVolunteerDemo(context)
       ),
       (
         Icons.settings_outlined,
@@ -54,34 +52,14 @@ class ProfileScreen extends StatelessWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                Row(
+                const Row(
                   children: [
+                    Expanded(child: StatTile(value: '12', label: 'Events')),
+                    SizedBox(width: 12),
+                    Expanded(child: StatTile(value: '36', label: 'Hours')),
+                    SizedBox(width: 12),
                     Expanded(
-                      child: StreamBuilder<List<CampusEvent>>(
-                        stream: SyncSphereBackend.instance.watchMyEvents(),
-                        builder: (context, snapshot) => StatTile(
-                          value: snapshot.hasData
-                              ? '${snapshot.data!.length}'
-                              : '—',
-                          label: 'Registrations',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: StreamBuilder<List<VolunteerAssignment>>(
-                        stream: SyncSphereBackend.instance
-                            .watchMyVolunteerAssignments(
-                          SyncSphereBackend.instance.currentUserId ?? '',
-                        ),
-                        builder: (context, snapshot) => StatTile(
-                          value: snapshot.hasData
-                              ? '${snapshot.data!.length}'
-                              : '—',
-                          label: 'Assignments',
-                        ),
-                      ),
-                    ),
+                        child: StatTile(value: '5', label: 'Certificates')),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -127,33 +105,17 @@ class ProfileScreen extends StatelessWidget {
                 child: const AvatarCircle(initial: 'N', size: 112),
               ),
               const SizedBox(height: 10),
-              StreamBuilder<AppUser?>(
-                stream: SyncSphereBackend.instance.watchCurrentUser(),
-                builder: (context, snapshot) {
-                  final user = snapshot.data;
-                  return Column(
-                    children: [
-                      Text(
-                        user?.name ??
-                            SyncSphereBackend.instance.currentUserName,
-                        style: const TextStyle(
-                          color: AppColors.ink,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        user?.department.isNotEmpty == true
-                            ? user!.department
-                            : (user?.role ?? 'Student'),
-                        style: const TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 17,
-                        ),
-                      ),
-                    ],
-                  );
-                },
+              const Text(
+                'Nilesh',
+                style: TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const Text(
+                'Computer Science',
+                style: TextStyle(color: AppColors.muted, fontSize: 17),
               ),
             ],
           ),

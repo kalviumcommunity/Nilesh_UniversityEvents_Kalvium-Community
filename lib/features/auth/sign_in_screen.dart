@@ -2,78 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../app/app_colors.dart';
 import '../../app/routes.dart';
-import '../../backend/syncsphere_backend.dart';
 import '../../ui/app_button.dart';
 import '../../ui/app_field.dart';
 
-class SignInScreen extends StatefulWidget {
+class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
-
-  @override
-  State<SignInScreen> createState() => _SignInScreenState();
-}
-
-class _SignInScreenState extends State<SignInScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isSubmitting = false;
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _signIn() async {
-    final email = _emailController.text;
-    final password = _passwordController.text;
-
-    setState(() => _isSubmitting = true);
-
-    final result = await SyncSphereBackend.instance.signIn(
-      email: email,
-      password: password,
-    );
-
-    if (!mounted) return;
-
-    if (result.success) {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        result.user?.role == 'admin' || result.user?.role == 'coordinator'
-            ? Routes.adminHome
-            : Routes.studentHome,
-        (_) => false,
-      );
-      return;
-    }
-    setState(() => _isSubmitting = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result.message ?? 'Sign in failed.')),
-    );
-  }
-
-  Future<void> _resetPassword() async {
-    final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter your email address first.')),
-      );
-      return;
-    }
-    try {
-      await SyncSphereBackend.instance.sendPasswordReset(email);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password reset email sent.')),
-      );
-    } on BackendException catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,37 +47,54 @@ class _SignInScreenState extends State<SignInScreen> {
                 style: TextStyle(color: Colors.white70, fontSize: 17),
               ),
               const SizedBox(height: 44),
-              AppField(
+              const AppField(
                 hint: 'Email / University Email',
                 icon: Icons.person_outline,
                 dark: true,
                 keyboardType: TextInputType.emailAddress,
-                controller: _emailController,
               ),
               const SizedBox(height: 14),
-              AppField(
+              const AppField(
                 hint: 'Password',
                 icon: Icons.lock_outline,
                 dark: true,
                 obscure: true,
-                controller: _passwordController,
               ),
               const SizedBox(height: 14),
-              Align(
+              const Align(
                 alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _resetPassword,
-                  child: const Text(
-                    'Forgot Password?',
-                    style: TextStyle(color: Colors.white, fontSize: 15),
-                  ),
+                child: Text(
+                  'Forgot Password?',
+                  style: TextStyle(color: Colors.white, fontSize: 15),
                 ),
               ),
               const SizedBox(height: 28),
               AppButton(
-                label: _isSubmitting ? 'Signing In...' : 'Sign In',
+                label: 'Sign In',
                 style: AppButtonStyle.blue,
-                onPressed: _isSubmitting ? null : _signIn,
+                onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  Routes.studentHome,
+                  (_) => false,
+                ),
+              ),
+              const SizedBox(height: 26),
+              const Text(
+                'or continue with',
+                style: TextStyle(color: Colors.white70, fontSize: 15),
+              ),
+              const SizedBox(height: 18),
+              const Row(
+                children: [
+                  Expanded(child: _SocialTile(child: _GoogleMark())),
+                  SizedBox(width: 14),
+                  Expanded(
+                    child: _SocialTile(
+                      child: Icon(Icons.apple, color: Colors.white, size: 34),
+                    ),
+                  ),
+                  SizedBox(width: 14),
+                  Expanded(child: _SocialTile(child: _MicrosoftMark())),
+                ],
               ),
               const SizedBox(height: 28),
               GestureDetector(
@@ -170,6 +120,70 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SocialTile extends StatelessWidget {
+  const _SocialTile({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 76,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.navyCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.navyBorder),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _GoogleMark extends StatelessWidget {
+  const _GoogleMark();
+
+  @override
+  Widget build(BuildContext context) => const Text(
+        'G',
+        style: TextStyle(
+          color: Color(0xFF4285F4),
+          fontSize: 34,
+          fontWeight: FontWeight.w800,
+        ),
+      );
+}
+
+class _MicrosoftMark extends StatelessWidget {
+  const _MicrosoftMark();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget sq(Color c) => Container(width: 15, height: 15, color: c);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            sq(const Color(0xFFF25022)),
+            const SizedBox(width: 3),
+            sq(const Color(0xFF7FBA00))
+          ],
+        ),
+        const SizedBox(height: 3),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            sq(const Color(0xFF00A4EF)),
+            const SizedBox(width: 3),
+            sq(const Color(0xFFFFB900))
+          ],
+        ),
+      ],
     );
   }
 }

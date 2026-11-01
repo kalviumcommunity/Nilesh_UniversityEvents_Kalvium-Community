@@ -1,9 +1,7 @@
 import 'dart:async';
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-import '../../backend/syncsphere_backend.dart';
 import '../../app/routes.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -19,31 +17,11 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(milliseconds: 2200), _continue);
-  }
-
-  Future<void> _continue() async {
-    try {
-      final user = await SyncSphereBackend.instance.currentUser;
-      if (!mounted) return;
-      final destination = switch (user?.role) {
-        'admin' || 'coordinator' => Routes.adminHome,
-        'student' => Routes.studentHome,
-        _ => Routes.onboarding,
-      };
-      Navigator.of(context).pushReplacementNamed(
-        destination,
-        arguments: destination == Routes.studentHome ? 0 : null,
-      );
-    } on FirebaseException catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.message ?? 'Could not load your account.'),
-        ),
-      );
-      Navigator.of(context).pushReplacementNamed(Routes.onboarding);
-    }
+    _timer = Timer(const Duration(milliseconds: 2200), () {
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed(Routes.onboarding);
+      }
+    });
   }
 
   @override

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/app_colors.dart';
-import '../../backend/syncsphere_backend.dart';
+import '../../data/mock_data.dart';
 import '../../ui/app_dropdown.dart';
 import '../../ui/screen_header.dart';
 
@@ -15,20 +15,10 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen> {
   static const _ranges = ['This Month', 'Last Month', 'This Year'];
   String _range = _ranges.first;
-  late Future<EventReport> _reportFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadReport();
-  }
-
-  void _loadReport() {
-    _reportFuture = SyncSphereBackend.instance.getEventReport(range: _range);
-  }
 
   @override
   Widget build(BuildContext context) {
+    const bars = [('Aug', 0.28), ('Sep', 0.45), ('Oct', 0.68), ('Nov', 1.0)];
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -44,111 +34,105 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     value: _range,
                     items: _ranges,
                     labelOf: (r) => r,
-                    onChanged: (r) => setState(() {
-                      _range = r ?? _range;
-                      _loadReport();
-                    }),
+                    onChanged: (r) => setState(() => _range = r ?? _range),
                   ),
                   const SizedBox(height: 16),
-                  FutureBuilder<EventReport>(
-                    future: _reportFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text(
-                            'Could not load event insights. Check your role access and try again.',
-                            style: TextStyle(color: AppColors.muted),
-                          ),
-                        );
-                      }
-                      if (!snapshot.hasData) {
-                        return const Padding(
-                          padding: EdgeInsets.all(32),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      }
-                      final report = snapshot.data!;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                  const Row(
+                    children: [
+                      Expanded(child: _Metric('248', 'Registrations')),
+                      SizedBox(width: 12),
+                      Expanded(child: _Metric('36', 'Volunteers')),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '92%',
+                        style: TextStyle(
+                          color: AppColors.ink,
+                          fontSize: 34,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(width: 14),
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          'Attendance Rate',
+                          style:
+                              TextStyle(color: AppColors.muted, fontSize: 17),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 170,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        for (final b in bars)
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              Expanded(
-                                child: _Metric(
-                                  '${report.registrations}',
-                                  'Registrations',
+                              Container(
+                                width: 42,
+                                height: 120 * b.$2,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF8FA2EE),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _Metric(
-                                  '${report.volunteers}',
-                                  'Volunteer assignments',
+                              const SizedBox(height: 8),
+                              Text(
+                                b.$1,
+                                style: const TextStyle(
+                                  color: AppColors.muted,
+                                  fontSize: 15,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
-                          const Text(
-                            'Attendance Rate',
-                            style: TextStyle(
-                              color: AppColors.ink,
-                              fontSize: 19,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Attendance tracking is not enabled yet.',
-                            style: TextStyle(
-                              color: AppColors.muted,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 22),
-                          const Text(
-                            'Top Events',
-                            style: TextStyle(
-                              color: AppColors.ink,
-                              fontSize: 19,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          if (report.topEvents.isEmpty)
-                            const Text(
-                              'No registrations in this range.',
-                              style: TextStyle(color: AppColors.muted),
-                            ),
-                          for (final event in report.topEvents)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      event.$1,
-                                      style: const TextStyle(
-                                        color: AppColors.ink,
-                                        fontSize: 17,
-                                      ),
-                                    ),
-                                  ),
-                                  Text(
-                                    '${event.$2}',
-                                    style: const TextStyle(
-                                      color: AppColors.ink,
-                                      fontSize: 17,
-                                    ),
-                                  ),
-                                ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  const Text(
+                    'Top Events',
+                    style: TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  for (final t in topEvents)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              t.$1,
+                              style: const TextStyle(
+                                color: AppColors.ink,
+                                fontSize: 17,
                               ),
                             ),
+                          ),
+                          Text(
+                            '${t.$2}',
+                            style: const TextStyle(
+                              color: AppColors.ink,
+                              fontSize: 17,
+                            ),
+                          ),
                         ],
-                      );
-                    },
-                  ),
+                      ),
+                    ),
                 ],
               ),
             ),

@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../app/app_colors.dart';
 import '../../app/routes.dart';
-import '../../data/app_models.dart';
+import '../../data/mock_data.dart';
 import '../../ui/app_button.dart';
 import '../../ui/image_placeholder.dart';
 
 class EventDetailsScreen extends StatelessWidget {
   const EventDetailsScreen({super.key, required this.event});
 
-  final CampusEvent event;
+  final MockEvent event;
 
   @override
   Widget build(BuildContext context) {

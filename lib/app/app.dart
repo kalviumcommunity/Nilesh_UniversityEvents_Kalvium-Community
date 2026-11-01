@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../data/app_models.dart';
+import '../data/mock_data.dart';
 import '../features/admin/admin_shell.dart';
 import '../features/admin/assign_volunteers_screen.dart';
 import '../features/admin/create_event_screen.dart';
@@ -59,13 +59,9 @@ Route<void> _onGenerateRoute(RouteSettings settings) {
     case Routes.adminHome:
       return page(const AdminShell());
     case Routes.eventDetails:
-      return args is CampusEvent
-          ? page(EventDetailsScreen(event: args))
-          : page(const _MissingEventScreen());
+      return page(EventDetailsScreen(event: args is MockEvent ? args : webDev));
     case Routes.register:
-      return args is CampusEvent
-          ? page(RegisterScreen(event: args))
-          : page(const _MissingEventScreen());
+      return page(RegisterScreen(event: args is MockEvent ? args : webDev));
     case Routes.registered:
       return page(const RegisteredScreen());
     case Routes.myEvents:
@@ -79,22 +75,13 @@ Route<void> _onGenerateRoute(RouteSettings settings) {
     case Routes.createEvent:
       return page(const CreateEventScreen());
     case Routes.assignVolunteers:
-      return args is CampusEvent
-          ? page(AssignVolunteersScreen(event: args))
-          : page(const _MissingEventScreen());
+      return page(
+        AssignVolunteersScreen(event: args is MockEvent ? args : webDev),
+      );
     case Routes.reports:
       return page(const ReportsScreen());
     case Routes.splash:
     default:
       return page(const SplashScreen());
   }
-}
-
-class _MissingEventScreen extends StatelessWidget {
-  const _MissingEventScreen();
-
-  @override
-  Widget build(BuildContext context) => const Scaffold(
-        body: Center(child: Text('This event could not be found.')),
-      );
 }
