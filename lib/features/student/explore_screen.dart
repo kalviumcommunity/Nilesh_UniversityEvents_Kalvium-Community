@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../app/app_colors.dart';
 import '../../app/routes.dart';
-import '../../data/mock_data.dart';
+import '../../backend/syncsphere_backend.dart';
+import '../../data/app_models.dart';
 import '../../ui/chip_row.dart';
 import '../../ui/event_row_card.dart';
 import '../../ui/screen_header.dart';
@@ -20,9 +21,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   int _filter = 0;
   String _query = '';
 
-  List<MockEvent> get _visible {
+  List<CampusEvent> _visible(List<CampusEvent> events) {
     final type = _filters[_filter];
-    return exploreEvents.where((e) {
+    return events.where((e) {
       final matchesType = type == 'All' || e.type == type;
       final q = _query.trim().toLowerCase();
       final matchesQuery = q.isEmpty ||
@@ -34,7 +35,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final events = _visible;
     return SafeArea(
       bottom: false,
       child: Column(
@@ -62,28 +62,43 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: events.isEmpty
-                ? const Center(
+            child: StreamBuilder<List<CampusEvent>>(
+              stream: SyncSphereBackend.instance.watchPublishedEvents(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text('Could not load events. Please try again.'),
+                  );
+                }
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final events = _visible(snapshot.data!);
+                if (events.isEmpty) {
+                  return const Center(
                     child: Text(
                       'No events found',
                       style: TextStyle(color: AppColors.muted, fontSize: 16),
                     ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: events.length,
-                    separatorBuilder: (_, __) =>
-                        const Divider(height: 1, color: AppColors.line),
-                    itemBuilder: (context, i) {
-                      final e = events[i];
-                      return EventRowCard(
-                        event: e,
-                        lines: [e.club, '${e.dateShort} • ${e.place}'],
-                        onTap: () => Navigator.of(context)
-                            .pushNamed(Routes.eventDetails, arguments: e),
-                      );
-                    },
-                  ),
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: events.length,
+                  separatorBuilder: (_, __) =>
+                      const Divider(height: 1, color: AppColors.line),
+                  itemBuilder: (context, i) {
+                    final e = events[i];
+                    return EventRowCard(
+                      event: e,
+                      lines: [e.club, '${e.dateShort} • ${e.place}'],
+                      onTap: () => Navigator.of(context)
+                          .pushNamed(Routes.eventDetails, arguments: e),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),

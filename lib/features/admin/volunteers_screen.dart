@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/app_colors.dart';
-import '../../data/mock_data.dart';
+import '../../backend/syncsphere_backend.dart';
 import '../../ui/avatar_circle.dart';
 import '../../ui/chip_row.dart';
 import '../../ui/screen_header.dart';
@@ -15,26 +15,20 @@ class VolunteersScreen extends StatefulWidget {
 }
 
 class _VolunteersScreenState extends State<VolunteersScreen> {
-  static const _filters = ['All', 'Assigned', 'Pending'];
+  static const _filters = ['All', 'Students'];
   int _filter = 0;
   String _query = '';
 
   @override
   Widget build(BuildContext context) {
-    final f = _filters[_filter];
     final q = _query.trim().toLowerCase();
-    final visible = volunteers
-        .where((v) =>
-            (f == 'All' || v.status == f) &&
-            (q.isEmpty || v.name.toLowerCase().contains(q)))
-        .toList();
 
     return SafeArea(
       bottom: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ScreenHeader(title: 'Volunteers (36)'),
+          const ScreenHeader(title: 'Student Volunteers'),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: SearchBox(
@@ -50,63 +44,80 @@ class _VolunteersScreenState extends State<VolunteersScreen> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: visible.isEmpty
-                ? const Center(
+            child: StreamBuilder<List<AppUser>>(
+              stream: SyncSphereBackend.instance.watchStudentDirectory(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text('Could not load student volunteers.'),
+                  );
+                }
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final visible = snapshot.data!
+                    .where((user) =>
+                        q.isEmpty || user.name.toLowerCase().contains(q))
+                    .toList();
+                if (visible.isEmpty) {
+                  return const Center(
                     child: Text(
-                      'No volunteers found',
+                      'No student volunteers found',
                       style: TextStyle(color: AppColors.muted, fontSize: 16),
                     ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: visible.length,
-                    separatorBuilder: (_, __) =>
-                        const Divider(height: 1, color: AppColors.line),
-                    itemBuilder: (context, i) {
-                      final v = visible[i];
-                      final assigned = v.status == 'Assigned';
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        child: Row(
-                          children: [
-                            AvatarCircle(
-                              initial: v.name[0],
-                              size: 60,
-                              colors: v.colors,
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    v.name,
-                                    style: const TextStyle(
-                                      color: AppColors.ink,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: visible.length,
+                  separatorBuilder: (_, __) =>
+                      const Divider(height: 1, color: AppColors.line),
+                  itemBuilder: (context, i) {
+                    final v = visible[i];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Row(
+                        children: [
+                          AvatarCircle(
+                            initial: v.name.isEmpty ? '?' : v.name[0],
+                            size: 60,
+                            colors: const [
+                              Color(0xFF8E9BE8),
+                              Color(0xFF4A63C4),
+                            ],
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  v.name,
+                                  style: const TextStyle(
+                                    color: AppColors.ink,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    v.status,
-                                    style: TextStyle(
-                                      color: assigned
-                                          ? AppColors.green
-                                          : AppColors.orange,
-                                      fontSize: 17,
-                                    ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  v.email,
+                                  style: const TextStyle(
+                                    color: AppColors.muted,
+                                    fontSize: 17,
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                            const Icon(Icons.chevron_right,
-                                color: AppColors.ink),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          ),
+                          const Icon(Icons.chevron_right, color: AppColors.ink),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),

@@ -1,0 +1,17 @@
+{
+  "name": "syncsphere-functions",
+  "private": true,
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "scripts": {
+    "lint": "node --check index.js",
+    "set-role": "node scripts/set-user-role.js",
+    "seed-clubs": "node scripts/seed-clubs.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.2",
+    "firebase-functions": "^6.3.2"
+  }
+}

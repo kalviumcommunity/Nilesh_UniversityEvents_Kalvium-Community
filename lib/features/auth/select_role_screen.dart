@@ -9,8 +9,19 @@ class SelectRoleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    void pick(AppRole role) =>
-        Navigator.of(context).pushNamed(Routes.allSet, arguments: role);
+    void pick(AppRole role) {
+      if (role != AppRole.student) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Coordinator and Admin access must be granted by a trusted administrator.',
+            ),
+          ),
+        );
+        return;
+      }
+      Navigator.of(context).pushNamed(Routes.allSet, arguments: role);
+    }
 
     return Scaffold(
       body: SafeArea(

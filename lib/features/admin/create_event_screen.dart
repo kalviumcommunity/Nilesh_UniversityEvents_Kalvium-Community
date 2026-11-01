@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/app_colors.dart';
+import '../../backend/syncsphere_backend.dart';
 import '../../ui/app_button.dart';
 import '../../ui/app_dropdown.dart';
 import '../../ui/app_field.dart';
@@ -25,6 +26,50 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   String? _category;
   String? _location;
   DateTime? _when;
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  bool _isSaving = false;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _createEvent() async {
+    if (_titleController.text.trim().isEmpty ||
+        _category == null ||
+        _location == null ||
+        _when == null ||
+        _descriptionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Complete all event details first.')),
+      );
+      return;
+    }
+    setState(() => _isSaving = true);
+    try {
+      await SyncSphereBackend.instance.createEvent(
+        title: _titleController.text,
+        category: _category!,
+        startAt: _when!,
+        venue: _location!,
+        description: _descriptionController.text,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Event created and published.')),
+      );
+    } on BackendException catch (error) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    }
+  }
 
   Future<void> _pickDateTime() async {
     final now = DateTime.now();
@@ -88,7 +133,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    const AppField(hint: 'Event Title'),
+                    AppField(
+                      hint: 'Event Title',
+                      controller: _titleController,
+                    ),
                     const SizedBox(height: 12),
                     AppDropdown<String>(
                       hint: 'Category',
@@ -135,10 +183,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       onChanged: (v) => setState(() => _location = v),
                     ),
                     const SizedBox(height: 12),
-                    const AppField(
+                    AppField(
                       hint: 'Description',
                       maxLines: 3,
                       fillColor: AppColors.greySoft,
+                      controller: _descriptionController,
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -148,16 +197,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: AppButton(
-                label: 'Create Event',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content:
-                          Text('Saving events is not wired up yet (UI only).'),
-                    ),
-                  );
-                  Navigator.of(context).maybePop();
-                },
+                label: _isSaving ? 'Creating...' : 'Create Event',
+                onPressed: _isSaving ? null : _createEvent,
               ),
             ),
           ],

@@ -28,9 +28,19 @@ enum AssignmentStatus {
 
   /// Maps a stored string to a status, or null if it is not recognised.
   /// This is the single mapping point to adjust to Aman's Firestore values.
+  ///
+  /// Real data can arrive in several forms: enum names (`assigned`), user-facing
+  /// labels (`Assigned`), and values with stray whitespace/casing differences.
   static AssignmentStatus? tryParse(String? raw) {
+    final value = raw?.trim();
+    if (value == null || value.isEmpty) return null;
+
+    final lower = value.toLowerCase();
     for (final status in values) {
-      if (status.name == raw) return status;
+      if (status.name.toLowerCase() == lower ||
+          status.label.toLowerCase() == lower) {
+        return status;
+      }
     }
     return null;
   }

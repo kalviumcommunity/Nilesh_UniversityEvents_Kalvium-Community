@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function hasRole(role) {
+      return signedIn() && request.auth.token.role == role;
+    }
+
+    function isManager() {
+      return hasRole('admin') || hasRole('coordinator');
+    }
+
+    function managesEvent(eventId) {
+      let event = get(/databases/$(database)/documents/events/$(eventId));
+      return signedIn() &&
+        (hasRole('admin') || event.data.ownerId == request.auth.uid);
+    }
+
+    match /users/{userId} {
+      allow create: if signedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.role == 'student' &&
+        request.resource.data.keys().hasOnly([
+          'name', 'email', 'role', 'department', 'clubId',
+          'phone', 'createdAt', 'updatedAt'
+        ]);
+      allow read: if signedIn() &&
+        (request.auth.uid == userId || isManager());
+      allow update: if signedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name', 'department', 'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    match /events/{eventId} {
+      allow read: if signedIn() &&
+        (resource.data.published == true ||
+         hasRole('admin') ||
+         resource.data.ownerId == request.auth.uid);
+      allow write: if false;
+
+      match /registrations/{userId} {
+        allow read: if signedIn() &&
+          (request.auth.uid == userId || managesEvent(eventId));
+        allow write: if false;
+      }
+    }
+
+    match /registrations/{registrationId} {
+      allow read: if signedIn() &&
+        (resource.data.userId == request.auth.uid ||
+         managesEvent(resource.data.eventId));
+      allow write: if false;
+    }
+
+    match /assignments/{assignmentId} {
+      allow read: if signedIn() &&
+        (resource.data.volunteerUid == request.auth.uid ||
+         managesEvent(resource.data.eventId));
+      allow write: if false;
+    }
+
+    match /clubs/{clubId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

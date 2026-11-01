@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../app/app_colors.dart';
-import '../../data/mock_data.dart';
+import '../../backend/syncsphere_backend.dart';
+import '../../data/app_models.dart';
 import '../../ui/chip_row.dart';
 import '../../ui/screen_header.dart';
 import '../../ui/search_box.dart';
@@ -22,12 +23,6 @@ class _ClubsScreenState extends State<ClubsScreen> {
   Widget build(BuildContext context) {
     final type = _filters[_filter];
     final q = _query.trim().toLowerCase();
-    final visible = clubs
-        .where((c) =>
-            (type == 'All' || c.type == type) &&
-            (q.isEmpty || c.name.toLowerCase().contains(q)))
-        .toList();
-
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -49,69 +44,86 @@ class _ClubsScreenState extends State<ClubsScreen> {
             ),
             const SizedBox(height: 8),
             Expanded(
-              child: visible.isEmpty
-                  ? const Center(
+              child: StreamBuilder<List<CampusClub>>(
+                stream: SyncSphereBackend.instance.watchClubs(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Center(child: Text('Could not load clubs.'));
+                  }
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final visible = snapshot.data!
+                      .where((c) =>
+                          (type == 'All' || c.type == type) &&
+                          (q.isEmpty || c.name.toLowerCase().contains(q)))
+                      .toList();
+                  if (visible.isEmpty) {
+                    return const Center(
                       child: Text(
                         'No clubs found',
                         style: TextStyle(color: AppColors.muted, fontSize: 16),
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: visible.length,
-                      separatorBuilder: (_, __) =>
-                          const Divider(height: 1, color: AppColors.line),
-                      itemBuilder: (context, i) {
-                        final c = visible[i];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 64,
-                                height: 64,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: c.colors,
+                    );
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: visible.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, color: AppColors.line),
+                    itemBuilder: (context, i) {
+                      final c = visible[i];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: c.colors,
+                                ),
+                              ),
+                              child:
+                                  Icon(c.icon, color: Colors.white, size: 30),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    c.name,
+                                    style: const TextStyle(
+                                      color: AppColors.ink,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
-                                ),
-                                child:
-                                    Icon(c.icon, color: Colors.white, size: 30),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      c.name,
-                                      style: const TextStyle(
-                                        color: AppColors.ink,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${c.members} members',
+                                    style: const TextStyle(
+                                      color: AppColors.muted,
+                                      fontSize: 16,
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${c.members} members',
-                                      style: const TextStyle(
-                                        color: AppColors.muted,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              const Icon(Icons.chevron_right,
-                                  color: AppColors.muted),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                            ),
+                            const Icon(Icons.chevron_right,
+                                color: AppColors.muted),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),

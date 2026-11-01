@@ -15,8 +15,7 @@ import '../widgets/respond_buttons.dart';
 /// path parameter alone. Navigation is the host's job: push this screen
 /// from the dashboard's `onOpenAssignment`; the AppBar back button pops it.
 ///
-/// [onConfirm] / [onDecline] are placeholders for Step 4 and are not wired
-/// to any response logic yet.
+/// The host supplies the authenticated response callbacks.
 class VolunteerAssignmentDetailsScreen extends StatefulWidget {
   const VolunteerAssignmentDetailsScreen({
     super.key,

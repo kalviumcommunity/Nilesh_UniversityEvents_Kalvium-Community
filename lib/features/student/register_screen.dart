@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../app/app_colors.dart';
 import '../../app/routes.dart';
-import '../../data/mock_data.dart';
+import '../../backend/syncsphere_backend.dart';
+import '../../data/app_models.dart';
 import '../../ui/app_button.dart';
 import '../../ui/app_dropdown.dart';
 import '../../ui/app_field.dart';
@@ -12,7 +13,7 @@ import '../../ui/screen_header.dart';
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key, required this.event});
 
-  final MockEvent event;
+  final CampusEvent event;
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -21,6 +22,34 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   static const _roles = ['Participant', 'Volunteer'];
   String _role = _roles.first;
+  bool _isSubmitting = false;
+  final _informationController = TextEditingController();
+
+  @override
+  void dispose() {
+    _informationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _confirmRegistration() async {
+    setState(() => _isSubmitting = true);
+
+    try {
+      await SyncSphereBackend.instance.registerForEvent(
+        widget.event.id,
+        participationRole: _role,
+        additionalInformation: _informationController.text,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(Routes.registered);
+    } on BackendException catch (error) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,10 +130,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const AppField(
+                    AppField(
                       hint: 'Any specific interests or questions?',
                       maxLines: 5,
                       fillColor: AppColors.greySoft,
+                      controller: _informationController,
                     ),
                     const SizedBox(height: 28),
                   ],
@@ -114,9 +144,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
               child: AppButton(
-                label: 'Confirm',
-                onPressed: () => Navigator.of(context)
-                    .pushReplacementNamed(Routes.registered),
+                label: _isSubmitting ? 'Confirming...' : 'Confirm',
+                onPressed: _isSubmitting ? null : _confirmRegistration,
               ),
             ),
           ],

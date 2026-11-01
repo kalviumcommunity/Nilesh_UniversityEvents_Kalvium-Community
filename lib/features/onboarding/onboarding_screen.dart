@@ -144,36 +144,47 @@ class _OnboardingPage extends StatelessWidget {
             ),
           ),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(32, 90, 32, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    page.number,
-                    style: TextStyle(color: fg.withAlpha(150), fontSize: 15),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxHeight < 600;
+                return SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    32,
+                    compact ? 24 : 90,
+                    32,
+                    110,
                   ),
-                  const SizedBox(height: 28),
-                  Text(
-                    page.title,
-                    style: TextStyle(
-                      color: fg,
-                      fontSize: 38,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        page.number,
+                        style:
+                            TextStyle(color: fg.withAlpha(150), fontSize: 15),
+                      ),
+                      SizedBox(height: compact ? 16 : 28),
+                      Text(
+                        page.title,
+                        style: TextStyle(
+                          color: fg,
+                          fontSize: compact ? 32 : 38,
+                          fontWeight: FontWeight.w600,
+                          height: 1.25,
+                        ),
+                      ),
+                      SizedBox(height: compact ? 14 : 22),
+                      Text(
+                        page.body,
+                        style: TextStyle(
+                          color: fg.withAlpha(170),
+                          fontSize: compact ? 16 : 18,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 22),
-                  Text(
-                    page.body,
-                    style: TextStyle(
-                      color: fg.withAlpha(170),
-                      fontSize: 18,
-                      height: 1.7,
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ],
